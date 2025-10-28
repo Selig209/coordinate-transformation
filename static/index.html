@@ -82,13 +82,23 @@
 
                     <div class="form-group">
                         <label for="target-crs">Target CRS</label>
-                        <select id="target-crs">
+                        <select id="target-crs" onchange="updateFormatOptions()">
                             <option value="WGS84">WGS84 (GPS Coordinates)</option>
                             <option value="UTM_30N" selected>UTM Zone 30N (Western Ghana)</option>
                             <option value="UTM_31N">UTM Zone 31N (Eastern Ghana)</option>
                             <option value="GHANA_GRID">Ghana National Grid</option>
                             <option value="WEB_MERCATOR">Web Mercator</option>
                         </select>
+                    </div>
+
+                    <div class="form-group" id="format-group" style="display: none;">
+                        <label for="output-format">Output Format</label>
+                        <select id="output-format">
+                            <option value="decimal">Decimal Degrees (5.6037°)</option>
+                            <option value="dms">DMS (5° 36' 13.32" N)</option>
+                            <option value="dm">DM (5° 36.222' N)</option>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.85rem;">Format applies to WGS84 output only</small>
                     </div>
 
                     <button class="btn btn-primary" onclick="transformCoordinates()">

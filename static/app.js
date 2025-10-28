@@ -77,6 +77,19 @@ function updateInputLabels() {
     }
 }
 
+// Update format options visibility
+function updateFormatOptions() {
+    const targetCRS = document.getElementById('target-crs').value;
+    const formatGroup = document.getElementById('format-group');
+    
+    // Show format selector only when target is WGS84
+    if (targetCRS === 'WGS84') {
+        formatGroup.style.display = 'block';
+    } else {
+        formatGroup.style.display = 'none';
+    }
+}
+
 // Set quick location
 function setLocation(lon, lat) {
     document.getElementById('input-x').value = lon;
@@ -89,6 +102,7 @@ async function transformCoordinates() {
     const targetCRS = document.getElementById('target-crs').value;
     const x = parseFloat(document.getElementById('input-x').value);
     const y = parseFloat(document.getElementById('input-y').value);
+    const outputFormat = document.getElementById('output-format')?.value || 'decimal';
 
     if (isNaN(x) || isNaN(y)) {
         showError('Please enter valid coordinate values');
@@ -99,7 +113,8 @@ async function transformCoordinates() {
     const requestData = {
         source_crs: sourceCRS,
         target_crs: targetCRS,
-        coordinates: sourceCRS === 'WGS84' ? { lon: x, lat: y } : { x: x, y: y }
+        coordinates: sourceCRS === 'WGS84' ? { lon: x, lat: y } : { x: x, y: y },
+        format: outputFormat
     };
 
     try {
@@ -145,7 +160,33 @@ function displayResults(result) {
                 <span class="result-value">${result.source.y.toFixed(6)}</span>
             </div>
 
-            <h3 style="margin-top: 20px;">Transformed Coordinates (${targetCRS})</h3>
+            <h3 style="margin-top: 20px;">Transformed Coordinates (${targetCRS})</h3>`;
+    
+    // Display formatted coordinates if available (for WGS84 output)
+    if (result.target.longitude && result.target.latitude) {
+        html += `
+            <div class="result-item">
+                <span class="result-label">Longitude</span>
+                <span class="result-value">${result.target.longitude.formatted}
+                    <button class="copy-btn" onclick="copyToClipboard('${result.target.longitude.formatted}')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Latitude</span>
+                <span class="result-value">${result.target.latitude.formatted}
+                    <button class="copy-btn" onclick="copyToClipboard('${result.target.latitude.formatted}')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Decimal</span>
+                <span class="result-value">${result.target.x.toFixed(8)}°, ${result.target.y.toFixed(8)}°</span>
+            </div>`;
+    } else {
+        html += `
             <div class="result-item">
                 <span class="result-label">${targetCRS === 'WGS84' ? 'Longitude' : 'Easting (X)'}</span>
                 <span class="result-value">${result.target.x.toFixed(6)}
@@ -161,7 +202,10 @@ function displayResults(result) {
                         <i class="fas fa-copy"></i>
                     </button>
                 </span>
-            </div>
+            </div>`;
+    }
+    
+    html += `
         </div>
     `;
 

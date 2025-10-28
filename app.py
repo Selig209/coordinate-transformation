@@ -85,6 +85,68 @@ def calculate_scale_factor(lat: float, lon: float, central_meridian: float, k0: 
     
     return k
 
+def decimal_to_dms(decimal_degrees: float, is_latitude: bool = True) -> Dict:
+    """Convert decimal degrees to degrees, minutes, seconds"""
+    is_positive = decimal_degrees >= 0
+    decimal_degrees = abs(decimal_degrees)
+    
+    degrees = int(decimal_degrees)
+    minutes_decimal = (decimal_degrees - degrees) * 60
+    minutes = int(minutes_decimal)
+    seconds = (minutes_decimal - minutes) * 60
+    
+    # Determine direction
+    if is_latitude:
+        direction = 'N' if is_positive else 'S'
+    else:
+        direction = 'E' if is_positive else 'W'
+    
+    return {
+        'degrees': degrees,
+        'minutes': minutes,
+        'seconds': round(seconds, 4),
+        'direction': direction,
+        'formatted': f"{degrees}° {minutes}' {seconds:.4f}\" {direction}"
+    }
+
+def decimal_to_dm(decimal_degrees: float, is_latitude: bool = True) -> Dict:
+    """Convert decimal degrees to degrees and decimal minutes"""
+    is_positive = decimal_degrees >= 0
+    decimal_degrees = abs(decimal_degrees)
+    
+    degrees = int(decimal_degrees)
+    minutes = (decimal_degrees - degrees) * 60
+    
+    # Determine direction
+    if is_latitude:
+        direction = 'N' if is_positive else 'S'
+    else:
+        direction = 'E' if is_positive else 'W'
+    
+    return {
+        'degrees': degrees,
+        'minutes': round(minutes, 6),
+        'direction': direction,
+        'formatted': f"{degrees}° {minutes:.6f}' {direction}"
+    }
+
+def format_coordinate(value: float, is_latitude: bool, format_type: str) -> Dict:
+    """Format coordinate based on requested format type"""
+    result = {
+        'decimal': round(value, 8)
+    }
+    
+    if format_type == 'dms':
+        result['dms'] = decimal_to_dms(value, is_latitude)
+        result['formatted'] = result['dms']['formatted']
+    elif format_type == 'dm':
+        result['dm'] = decimal_to_dm(value, is_latitude)
+        result['formatted'] = result['dm']['formatted']
+    else:  # decimal (default)
+        result['formatted'] = f"{value:.8f}°"
+    
+    return result
+
 @app.route('/')
 def index():
     """Serve the main application page"""
@@ -143,6 +205,7 @@ def transform_coordinates():
         source_crs = data.get('source_crs')
         target_crs = data.get('target_crs')
         coordinates = data.get('coordinates')
+        output_format = data.get('format', 'decimal')  # decimal, dms, or dm
         
         if not all([source_crs, target_crs, coordinates]):
             return jsonify({'error': 'Missing required parameters'}), 400
@@ -189,6 +252,11 @@ def transform_coordinates():
                 'y': round(transformed_y, 6)
             }
         }
+        
+        # Add formatted coordinates if target is WGS84 and format is specified
+        if target_crs == 'WGS84' and output_format != 'decimal':
+            result['target']['longitude'] = format_coordinate(transformed_x, False, output_format)
+            result['target']['latitude'] = format_coordinate(transformed_y, True, output_format)
         
         # Add additional information for specific transformations
         if target_crs in ['UTM_30N', 'UTM_31N']:
