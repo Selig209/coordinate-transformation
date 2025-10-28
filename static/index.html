@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Transformation Tool - Ghana CRS</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-globe-africa"></i> Coordinate Transformation Tool</h1>
+                <p class="subtitle">Professional-grade coordinate transformations for Ghana and beyond</p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>5 CRS Supported</span>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-bullseye"></i>
+                    <span>< 5m Accuracy</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('single')">
+                <i class="fas fa-map-pin"></i> Single Transform
+            </button>
+            <button class="tab-button" onclick="switchTab('batch')">
+                <i class="fas fa-file-csv"></i> Batch Processing
+            </button>
+            <button class="tab-button" onclick="switchTab('info')">
+                <i class="fas fa-info-circle"></i> CRS Information
+            </button>
+        </div>
+
+        <!-- Single Transformation Tab -->
+        <div id="single-tab" class="tab-content active">
+            <div class="grid-layout">
+                <!-- Input Section -->
+                <div class="card">
+                    <h2><i class="fas fa-sign-in-alt"></i> Input Coordinates</h2>
+                    
+                    <div class="form-group">
+                        <label for="source-crs">Source CRS</label>
+                        <select id="source-crs" onchange="updateInputLabels()">
+                            <option value="WGS84">WGS84 (GPS Coordinates)</option>
+                            <option value="UTM_30N">UTM Zone 30N (Western Ghana)</option>
+                            <option value="UTM_31N">UTM Zone 31N (Eastern Ghana)</option>
+                            <option value="GHANA_GRID">Ghana National Grid</option>
+                            <option value="WEB_MERCATOR">Web Mercator</option>
+                        </select>
+                    </div>
+
+                    <div class="coordinate-inputs">
+                        <div class="form-group">
+                            <label for="input-x" id="input-x-label">Longitude</label>
+                            <input type="number" id="input-x" step="any" placeholder="-0.1870" />
+                        </div>
+                        <div class="form-group">
+                            <label for="input-y" id="input-y-label">Latitude</label>
+                            <input type="number" id="input-y" step="any" placeholder="5.6037" />
+                        </div>
+                    </div>
+
+                    <div class="quick-locations">
+                        <label>Quick Locations (Ghana):</label>
+                        <div class="location-buttons">
+                            <button onclick="setLocation(-0.1870, 5.6037)">Accra</button>
+                            <button onclick="setLocation(-1.6163, 6.6885)">Kumasi</button>
+                            <button onclick="setLocation(-0.0300, 9.4034)">Tamale</button>
+                            <button onclick="setLocation(-2.3333, 4.9000)">Takoradi</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="target-crs">Target CRS</label>
+                        <select id="target-crs">
+                            <option value="WGS84">WGS84 (GPS Coordinates)</option>
+                            <option value="UTM_30N" selected>UTM Zone 30N (Western Ghana)</option>
+                            <option value="UTM_31N">UTM Zone 31N (Eastern Ghana)</option>
+                            <option value="GHANA_GRID">Ghana National Grid</option>
+                            <option value="WEB_MERCATOR">Web Mercator</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="transformCoordinates()">
+                        <i class="fas fa-exchange-alt"></i> Transform
+                    </button>
+                </div>
+
+                <!-- Results Section -->
+                <div class="card">
+                    <h2><i class="fas fa-sign-out-alt"></i> Transformed Coordinates</h2>
+                    <div id="results-container">
+                        <div class="empty-state">
+                            <i class="fas fa-arrows-alt"></i>
+                            <p>Enter coordinates and click Transform to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            <div class="card map-card">
+                <h2><i class="fas fa-map"></i> Visual Map</h2>
+                <div id="map"></div>
+            </div>
+
+            <!-- Accuracy Information -->
+            <div class="card" id="accuracy-card" style="display: none;">
+                <h2><i class="fas fa-bullseye"></i> Transformation Accuracy</h2>
+                <div id="accuracy-info"></div>
+            </div>
+        </div>
+
+        <!-- Batch Processing Tab -->
+        <div id="batch-tab" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-upload"></i> Batch Coordinate Transformation</h2>
+                
+                <div class="batch-instructions">
+                    <h3>Instructions:</h3>
+                    <ol>
+                        <li>Prepare a CSV file with columns: <code>x, y</code> or <code>lon, lat</code> or <code>longitude, latitude</code></li>
+                        <li>Select source and target coordinate systems</li>
+                        <li>Upload your CSV file</li>
+                        <li>Download the transformed coordinates</li>
+                    </ol>
+                    
+                    <div class="sample-download">
+                        <button class="btn btn-secondary" onclick="downloadSampleCSV()">
+                            <i class="fas fa-download"></i> Download Sample CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="batch-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="batch-source-crs">Source CRS</label>
+                            <select id="batch-source-crs">
+                                <option value="WGS84">WGS84 (GPS Coordinates)</option>
+                                <option value="UTM_30N">UTM Zone 30N</option>
+                                <option value="UTM_31N">UTM Zone 31N</option>
+                                <option value="GHANA_GRID">Ghana National Grid</option>
+                                <option value="WEB_MERCATOR">Web Mercator</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="batch-target-crs">Target CRS</label>
+                            <select id="batch-target-crs">
+                                <option value="WGS84">WGS84 (GPS Coordinates)</option>
+                                <option value="UTM_30N" selected>UTM Zone 30N</option>
+                                <option value="UTM_31N">UTM Zone 31N</option>
+                                <option value="GHANA_GRID">Ghana National Grid</option>
+                                <option value="WEB_MERCATOR">Web Mercator</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="file-upload-area">
+                        <input type="file" id="csv-file" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+                        <div class="upload-box" onclick="document.getElementById('csv-file').click()">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Click to upload CSV file</p>
+                            <span class="file-info" id="file-info">No file selected</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="processBatch()" id="process-batch-btn" disabled>
+                        <i class="fas fa-cogs"></i> Process Batch
+                    </button>
+                </div>
+
+                <div id="batch-results" style="display: none;">
+                    <h3>Results</h3>
+                    <div class="batch-stats" id="batch-stats"></div>
+                    <button class="btn btn-success" onclick="downloadResults()">
+                        <i class="fas fa-download"></i> Download Transformed CSV
+                    </button>
+                    <div class="results-preview" id="results-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRS Information Tab -->
+        <div id="info-tab" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-book"></i> Coordinate Reference Systems</h2>
+                <div id="crs-info-container">
+                    <div class="loading">Loading CRS information...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2><i class="fas fa-graduation-cap"></i> Understanding Datum Transformations</h2>
+                <div class="info-content">
+                    <h3>What is a Datum?</h3>
+                    <p>A geodetic datum is a reference system for defining positions on Earth's surface. Different datums use different ellipsoid models and origin points.</p>
+                    
+                    <h3>Ghana's Coordinate Systems</h3>
+                    <ul>
+                        <li><strong>WGS84:</strong> Global standard, used by GPS satellites</li>
+                        <li><strong>Ghana National Grid:</strong> Based on Clarke 1880 ellipsoid and Accra Datum</li>
+                        <li><strong>UTM:</strong> Universal system, Ghana spans zones 30N and 31N</li>
+                    </ul>
+
+                    <h3>Transformation Accuracy</h3>
+                    <p>Transformation accuracy depends on several factors:</p>
+                    <ul>
+                        <li>Quality of transformation parameters (7-parameter Helmert transformation)</li>
+                        <li>Local datum deformation</li>
+                        <li>Survey methodology and equipment accuracy</li>
+                    </ul>
+
+                    <div class="accuracy-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Transformation</th>
+                                    <th>Expected Accuracy</th>
+                                    <th>Application</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>WGS84 ↔ UTM</td>
+                                    <td>< 1 meter</td>
+                                    <td>Engineering surveys, cadastral mapping</td>
+                                </tr>
+                                <tr>
+                                    <td>WGS84 ↔ Ghana Grid</td>
+                                    <td>1-5 meters</td>
+                                    <td>National surveying, land registration</td>
+                                </tr>
+                                <tr>
+                                    <td>UTM ↔ Ghana Grid</td>
+                                    <td>1-5 meters</td>
+                                    <td>Integration with national systems</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with <i class="fas fa-heart"></i> for Geomatics Engineering | 
+            <a href="https://github.com" target="_blank"><i class="fab fa-github"></i> View on GitHub</a></p>
+            <p class="credits">Using PyProj, Flask, Leaflet.js | © 2025</p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
