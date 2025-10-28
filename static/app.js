@@ -13,6 +13,7 @@ let batchData = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeMap();
     loadCRSInfo();
+    updateFormatOptions(); // Initialize format selector visibility
 });
 
 // Tab switching
