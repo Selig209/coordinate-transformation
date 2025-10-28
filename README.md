@@ -2,7 +2,7 @@
 
 A professional web application for transforming coordinates between different Coordinate Reference Systems (CRS), with focus on Ghana's national grid systems.
 
-🌐 **[Live Demo](#)** (Coming soon - Deploy to Vercel)
+🌐 **[Live Demo](https://coordinate-transformation.vercel.app)**
 
 ---
 
@@ -169,7 +169,7 @@ MIT License - see LICENSE file for details
 
 **Selig Atambire**
 - GitHub: [@Selig209](https://github.com/Selig209)
-- LinkedIn: [Add your LinkedIn profile here]
+- LinkedIn: [Selig Amoak](https://linkedin.com/in/selig-amoak)
 - Email: Seligatambire@gmail.com
 
 ---
