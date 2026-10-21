@@ -11,7 +11,9 @@ A professional web application for transforming coordinates between different Co
 - **Single Point Transformation**: Real-time coordinate conversion with accuracy information
 - **Batch Processing**: Upload CSV files for bulk transformations
 - **Interactive Mapping**: Visualize coordinates on Leaflet.js maps
-- **5 Coordinate Systems**: WGS84, UTM 30N, UTM 31N, Ghana National Grid, Web Mercator
+- **6 Coordinate Systems**: WGS84, UTM 30N, UTM 31N, Ghana National Grid, Ghana Metre Grid, Web Mercator
+- **Honest accuracy reporting**: each result shows the EPSG transformation actually applied and its published accuracy
+- **Validated**: automated tests check every grid against its defining parameters
 - **Mobile Responsive**: Works on all devices
 
 ---
@@ -23,7 +25,8 @@ A professional web application for transforming coordinates between different Co
 | WGS84 | 4326 | Global | GPS, international mapping |
 | UTM 30N | 32630 | 6°W - 0° | Western Ghana surveys |
 | UTM 31N | 32631 | 0° - 6°E | Eastern Ghana surveys |
-| Ghana Grid | Custom | Ghana | National surveying |
+| Ghana National Grid (Accra) | 2136 | Ghana | Legacy national grid, **Gold Coast feet** |
+| Ghana Metre Grid (Leigon) | 25000 | Ghana | Metric national grid |
 | Web Mercator | 3857 | Global | Web mapping |
 
 ---
@@ -47,7 +50,7 @@ A professional web application for transforming coordinates between different Co
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/coordinate-transformation.git
+git clone https://github.com/Selig209/coordinate-transformation.git
 cd coordinate-transformation
 ```
 
@@ -115,11 +118,31 @@ Transform multiple coordinates from CSV.
 
 ## Transformation Accuracy
 
-| Transformation | Expected Accuracy |
-|---------------|-------------------|
-| WGS84 ↔ UTM | < 1 meter |
-| WGS84 ↔ Ghana Grid | 1-5 meters |
-| UTM ↔ Ghana Grid | 1-5 meters |
+| Transformation | Accuracy | Reason |
+|---------------|----------|--------|
+| WGS84 ↔ UTM / Web Mercator | Exact (< 1 mm) | Same datum, projection conversion only |
+| WGS84 ↔ Ghana National Grid | ~6 m onshore, ~25 m offshore | EPSG "Accra to WGS 84" transformations |
+| WGS84 ↔ Ghana Metre Grid | ~5 m | EPSG "Leigon to WGS 84 (1)" |
+
+For datum shifts, PyProj selects the most accurate EPSG operation whose area of use contains the point,
+and the API returns that operation's name and published accuracy with every result.
+For survey-grade work, use locally determined transformation parameters and control points.
+
+---
+
+## Validation
+
+```bash
+pip install pytest
+pytest -q
+```
+
+The tests check, among other things, that:
+- the UTM false origin (central meridian, equator) maps to E 500 000 m, N 0
+- the Ghana National Grid natural origin (4°40'N, 1°W, Accra datum) maps to E 900 000 ft, N 0
+- the Ghana Metre Grid natural origin (Leigon datum) maps to E 274 319.51 m, N 0
+- round trips through the API return to the start point within about 1 mm
+- onshore and offshore points use the correct Accra datum transformation
 
 ---
 
@@ -130,6 +153,7 @@ coordinate-transformation/
 ├── app.py              # Flask backend
 ├── requirements.txt    # Python dependencies
 ├── vercel.json        # Deployment config
+├── tests/             # Geodetic validation tests
 └── static/
     ├── index.html     # Main interface
     ├── styles.css     # Styling
@@ -167,7 +191,7 @@ MIT License - see LICENSE file for details
 
 ## Author
 
-**Selig Atambire**
+**Selig Anyawon Amoak**
 - GitHub: [@Selig209](https://github.com/Selig209)
 - LinkedIn: [Selig Amoak](https://linkedin.com/in/selig-amoak)
 - Email: Seligatambire@gmail.com
@@ -178,4 +202,4 @@ MIT License - see LICENSE file for details
 
 - PyProj for coordinate transformation library
 - Leaflet.js for mapping capabilities
-- Ghana Survey Department for CRS specifications
+- EPSG Geodetic Parameter Dataset for CRS and transformation definitions

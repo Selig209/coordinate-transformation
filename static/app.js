@@ -74,8 +74,16 @@ function updateInputLabels() {
     } else {
         xLabel.textContent = 'Easting (X)';
         yLabel.textContent = 'Northing (Y)';
-        xInput.placeholder = '829884.5';
-        yInput.placeholder = '620614.0';
+        const examples = {
+            UTM_30N: ['811654.2', '620144.5'],
+            UTM_31N: ['146870.3', '620356.8'],
+            GHANA_GRID: ['1195354.3', '339057.6'],
+            GHANA_METRE_GRID: ['364346.6', '103340.0'],
+            WEB_MERCATOR: ['-20816.7', '624797.9']
+        };
+        const [ex, ey] = examples[sourceCRS] || ['', ''];
+        xInput.placeholder = ex;
+        yInput.placeholder = ey;
     }
 }
 
@@ -126,11 +134,11 @@ async function transformCoordinates() {
             body: JSON.stringify(requestData)
         });
 
+        const result = await response.json();
         if (!response.ok) {
-            throw new Error('Transformation failed');
+            throw new Error(result.error || 'Transformation failed');
         }
 
-        const result = await response.json();
         displayResults(result);
         updateMap(result);
         
@@ -162,7 +170,8 @@ function displayResults(result) {
                 <span class="result-value">${result.source.y.toFixed(6)}</span>
             </div>
 
-            <h3 style="margin-top: 20px;">Transformed Coordinates (${targetCRS})</h3>`;
+            <h3 style="margin-top: 20px;">Transformed Coordinates (${targetCRS})</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Units: ${result.target.units || ''}</p>`;
     
     // Display formatted coordinates if available (for WGS84 output)
     if (result.target.longitude && result.target.latitude) {
@@ -246,6 +255,9 @@ function displayAccuracy(accuracy, metadata) {
                 <strong>Description:</strong> ${accuracy.description}
             </div>
             <div class="accuracy-detail">
+                <strong>Operation applied:</strong> ${accuracy.operation || ''}
+            </div>
+            <div class="accuracy-detail">
                 <strong>Typical Use Cases:</strong> ${accuracy.use_case}
             </div>
         </div>
@@ -263,15 +275,13 @@ function updateMap(result) {
     // Determine which coordinates to display on map (always convert to WGS84 for display)
     let lat, lon;
 
-    if (result.source.crs === 'WGS84') {
+    if (result.wgs84) {
+        lon = result.wgs84.lon;
+        lat = result.wgs84.lat;
+    } else if (result.source.crs === 'WGS84') {
         lon = result.source.x;
         lat = result.source.y;
-    } else if (result.target.crs === 'WGS84') {
-        lon = result.target.x;
-        lat = result.target.y;
     } else {
-        // If neither is WGS84, we'll need to convert for display
-        // For now, skip map update
         return;
     }
 
@@ -355,11 +365,11 @@ async function processBatch() {
             body: formData
         });
 
+        const result = await response.json();
         if (!response.ok) {
-            throw new Error('Batch processing failed');
+            throw new Error(result.error || 'Batch processing failed');
         }
 
-        const result = await response.json();
         batchData = result.data;
         displayBatchResults(result);
 
@@ -456,9 +466,9 @@ function downloadSampleCSV() {
     const sampleData = `lon,lat,location
 -0.1870,5.6037,Accra
 -1.6163,6.6885,Kumasi
--0.0300,9.4034,Tamale
--2.3333,4.9000,Takoradi
--0.9000,5.5500,Cape Coast`;
+-0.8392,9.4034,Tamale
+-1.7537,4.8967,Takoradi
+-1.2466,5.1053,Cape Coast`;
 
     const blob = new Blob([sampleData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);

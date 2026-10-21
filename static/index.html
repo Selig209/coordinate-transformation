@@ -19,11 +19,11 @@
             <div class="header-stats">
                 <div class="stat-item">
                     <i class="fas fa-map-marked-alt"></i>
-                    <span>5 CRS Supported</span>
+                    <span>6 CRS Supported</span>
                 </div>
                 <div class="stat-item">
                     <i class="fas fa-bullseye"></i>
-                    <span>< 5m Accuracy</span>
+                    <span>EPSG-Validated</span>
                 </div>
             </div>
         </header>
@@ -54,7 +54,8 @@
                             <option value="WGS84">WGS84 (GPS Coordinates)</option>
                             <option value="UTM_30N">UTM Zone 30N (Western Ghana)</option>
                             <option value="UTM_31N">UTM Zone 31N (Eastern Ghana)</option>
-                            <option value="GHANA_GRID">Ghana National Grid</option>
+                            <option value="GHANA_GRID">Ghana National Grid (Accra, feet)</option>
+                            <option value="GHANA_METRE_GRID">Ghana Metre Grid (Leigon, metres)</option>
                             <option value="WEB_MERCATOR">Web Mercator</option>
                         </select>
                     </div>
@@ -86,7 +87,8 @@
                             <option value="WGS84">WGS84 (GPS Coordinates)</option>
                             <option value="UTM_30N" selected>UTM Zone 30N (Western Ghana)</option>
                             <option value="UTM_31N">UTM Zone 31N (Eastern Ghana)</option>
-                            <option value="GHANA_GRID">Ghana National Grid</option>
+                            <option value="GHANA_GRID">Ghana National Grid (Accra, feet)</option>
+                            <option value="GHANA_METRE_GRID">Ghana Metre Grid (Leigon, metres)</option>
                             <option value="WEB_MERCATOR">Web Mercator</option>
                         </select>
                     </div>
@@ -160,7 +162,8 @@
                                 <option value="WGS84">WGS84 (GPS Coordinates)</option>
                                 <option value="UTM_30N">UTM Zone 30N</option>
                                 <option value="UTM_31N">UTM Zone 31N</option>
-                                <option value="GHANA_GRID">Ghana National Grid</option>
+                                <option value="GHANA_GRID">Ghana National Grid (Accra, feet)</option>
+                            <option value="GHANA_METRE_GRID">Ghana Metre Grid (Leigon, metres)</option>
                                 <option value="WEB_MERCATOR">Web Mercator</option>
                             </select>
                         </div>
@@ -171,7 +174,8 @@
                                 <option value="WGS84">WGS84 (GPS Coordinates)</option>
                                 <option value="UTM_30N" selected>UTM Zone 30N</option>
                                 <option value="UTM_31N">UTM Zone 31N</option>
-                                <option value="GHANA_GRID">Ghana National Grid</option>
+                                <option value="GHANA_GRID">Ghana National Grid (Accra, feet)</option>
+                            <option value="GHANA_METRE_GRID">Ghana Metre Grid (Leigon, metres)</option>
                                 <option value="WEB_MERCATOR">Web Mercator</option>
                             </select>
                         </div>
@@ -220,14 +224,15 @@
                     <h3>Ghana's Coordinate Systems</h3>
                     <ul>
                         <li><strong>WGS84:</strong> Global standard, used by GPS satellites</li>
-                        <li><strong>Ghana National Grid:</strong> Based on Clarke 1880 ellipsoid and Accra Datum</li>
+                        <li><strong>Ghana National Grid (EPSG:2136):</strong> Accra datum, War Office ellipsoid, units in Gold Coast feet</li>
+                        <li><strong>Ghana Metre Grid (EPSG:25000):</strong> Leigon datum, Clarke 1880 (RGS) ellipsoid, units in metres</li>
                         <li><strong>UTM:</strong> Universal system, Ghana spans zones 30N and 31N</li>
                     </ul>
 
                     <h3>Transformation Accuracy</h3>
                     <p>Transformation accuracy depends on several factors:</p>
                     <ul>
-                        <li>Quality of transformation parameters (7-parameter Helmert transformation)</li>
+                        <li>Quality of the published datum transformation parameters between the local datum and WGS84</li>
                         <li>Local datum deformation</li>
                         <li>Survey methodology and equipment accuracy</li>
                     </ul>
@@ -237,28 +242,29 @@
                             <thead>
                                 <tr>
                                     <th>Transformation</th>
-                                    <th>Expected Accuracy</th>
-                                    <th>Application</th>
+                                    <th>Accuracy</th>
+                                    <th>Why</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>WGS84 ↔ UTM</td>
-                                    <td>< 1 meter</td>
-                                    <td>Engineering surveys, cadastral mapping</td>
+                                    <td>WGS84 ↔ UTM / Web Mercator</td>
+                                    <td>Exact (&lt; 1 mm)</td>
+                                    <td>Same datum: projection conversion only</td>
                                 </tr>
                                 <tr>
-                                    <td>WGS84 ↔ Ghana Grid</td>
-                                    <td>1-5 meters</td>
-                                    <td>National surveying, land registration</td>
+                                    <td>WGS84 ↔ Ghana National Grid</td>
+                                    <td>About 6 m onshore, 25 m offshore (EPSG published)</td>
+                                    <td>Datum shift Accra → WGS84</td>
                                 </tr>
                                 <tr>
-                                    <td>UTM ↔ Ghana Grid</td>
-                                    <td>1-5 meters</td>
-                                    <td>Integration with national systems</td>
+                                    <td>WGS84 ↔ Ghana Metre Grid</td>
+                                    <td>About 5 m (EPSG published)</td>
+                                    <td>Datum shift Leigon → WGS84</td>
                                 </tr>
                             </tbody>
                         </table>
+                        <p style="margin-top:10px;">The exact accuracy of the transformation used is shown with every result. For survey-grade work, use locally determined parameters and control points.</p>
                     </div>
                 </div>
             </div>
@@ -267,8 +273,8 @@
         <!-- Footer -->
         <footer class="footer">
             <p>Built with <i class="fas fa-heart"></i> for Geomatics Engineering | 
-            <a href="https://github.com" target="_blank"><i class="fab fa-github"></i> View on GitHub</a></p>
-            <p class="credits">Using PyProj, Flask, Leaflet.js | © 2025</p>
+            <a href="https://github.com/Selig209/coordinate-transformation" target="_blank"><i class="fab fa-github"></i> View on GitHub</a></p>
+            <p class="credits">By Selig Anyawon Amoak | Using PyProj, Flask, Leaflet.js | © 2025</p>
         </footer>
     </div>
 
